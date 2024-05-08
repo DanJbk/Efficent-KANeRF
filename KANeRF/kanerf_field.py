@@ -1,4 +1,4 @@
-from kan import KAN
+from efficient_kan import EKAN
 
 from typing import Literal, Optional
 from torch import Tensor, nn
@@ -93,58 +93,48 @@ class KANeRFactoField(NerfactoField):
             implementation,
         )
 
-        self.mlp_base_mlp = KAN(
-            width=[self.mlp_base_grid.get_out_dim()]
+        self.mlp_base_mlp = EKAN(
+            layers_hidden=[self.mlp_base_grid.get_out_dim()]
             + [hidden_dim] * num_layers
             + [1 + self.geo_feat_dim],
-            device=kan_device,
-            grid=grid,
-            k=k,
-            seed=42,
+            grid_size=grid,
+            spline_order=k,
         )
         self.mlp_base[1] = self.mlp_base_mlp
 
         if self.use_transient_embedding:
-            self.mlp_transient = KAN(
-                width=[self.geo_feat_dim + self.transient_embedding_dim]
+            self.mlp_transient = EKAN(
+                layers_hidden=[self.geo_feat_dim + self.transient_embedding_dim]
                 + [hidden_dim_transient] * num_layers_transient
                 +[hidden_dim_transient],
-                device=kan_device,
-                grid=grid,
-                k=k,
-                seed=42,
-            )
+                grid_size=grid,
+                spline_order=k,
+            ).to(kan_device)
 
         if self.use_semantics:
-            self.mlp_semantics = KAN(
-                width=[self.geo_feat_dim]
+            self.mlp_semantics = EKAN(
+                [self.geo_feat_dim]
                 + [64, 64]
                 + [hidden_dim_transient],
-                device=kan_device,
-                grid=grid,
-                k=k,
-                seed=42,
-            )
+                grid_size=grid,
+                spline_order=k,
+            ).to(kan_device)
 
         if self.use_pred_normals:
-            self.mlp_pred_normals = KAN(
-                width=[self.geo_feat_dim + self.position_encoding.get_out_dim()]
+            self.mlp_pred_normals = EKAN(
+                [self.geo_feat_dim + self.position_encoding.get_out_dim()]
                 + [64] * 3
                 + [hidden_dim_transient],
-                device=kan_device,
-                grid=grid,
-                k=k,
-                seed=42,
-            )
+                grid_size=grid,
+                spline_order=k,
+            ).to(kan_device)
 
-        self.mlp_head_base = KAN(
-            width=[self.direction_encoding.get_out_dim() + self.geo_feat_dim + self.appearance_embedding_dim]
+        self.mlp_head_base = EKAN(
+            [self.direction_encoding.get_out_dim() + self.geo_feat_dim + self.appearance_embedding_dim]
             + [hidden_dim_color] * num_layers_color
             + [3],
-            device=kan_device,
-            grid=grid,
-            k=k,
-            seed=42,
-        )
+            grid_size=grid,
+            spline_order=k,
+        ).to(kan_device)
 
         self.mlp_head = nn.Sequential(self.mlp_head_base, nn.Sigmoid())
