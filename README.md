@@ -25,7 +25,7 @@ pip install ninja git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindi
 pip install nerfstudio
 
 # install KAN
-pip install pykan
+pip install git+https://github.com/Blealtan/efficient-kan.git
 ```
 
 # Performance Comparision
